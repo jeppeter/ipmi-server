@@ -32,9 +32,14 @@ void exit_cleanup() {
 
 int main(int argc, char**argv)
 {
+	int port = RMCP_UDP_PORT;
 	// padd current password with zeros
 	password_padded = calloc(16, sizeof(uint8_t));
 	memcpy(password_padded, password, MIN(strlen(password), 16));
+
+	if (argc > 1) {
+		port = atoi(argv[1]);
+	}
 
 
 	// initialize sensors
@@ -57,10 +62,10 @@ int main(int argc, char**argv)
 	bzero(&servaddr,sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr=htonl(INADDR_ANY);
-	servaddr.sin_port=htons(RMCP_UDP_PORT);
-	printf("Starting IPMI Server on Port %d\n",RMCP_UDP_PORT);
+	servaddr.sin_port=htons(port);
+	printf("Starting IPMI Server on Port %d\n",port);
 	if (bind(sockfd,(struct sockaddr *)&servaddr,sizeof(servaddr)) == -1) {
-		printf("Could not open UDP socket on Port %d, exiting.\n",RMCP_UDP_PORT);
+		printf("Could not open UDP socket on Port %d, exiting.\n",port);
 		exit_cleanup();
 	}
 
