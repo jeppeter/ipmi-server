@@ -18,14 +18,17 @@ void log_debug(int level, const char* file, int lineno, const char* fmt, ...)
     if (level > st_loglevel) {
         return;
     }
-#ifdef DEBUG
-    fprintf(stderr, "[%s:%d] ", file, lineno);
-#endif
+
+    if (st_loglevel >= LOG_DEBUG_LEVEL){
+    	fprintf(stderr, "[%s:%d] ", file, lineno);	
+    }
+    
     if (fmt != NULL) {
         va_start(ap, fmt);
         vfprintf(stderr, fmt, ap);
         fprintf(stderr, "\n");
     }
+    fflush(stderr);
     return;
 }
 
@@ -38,9 +41,9 @@ void log_buffer_debug(int level, const char* file, int lineno, void* pbuf, int s
     if (level > st_loglevel) {
         return;
     }
-#ifdef DEBUG
-    fprintf(stderr, "[%s:%d] ", file, lineno);
-#endif
+    if (st_loglevel >= LOG_DEBUG_LEVEL){
+    	fprintf(stderr, "[%s:%d] ", file, lineno);	
+    }
     if (fmt != NULL) {
         va_start(ap, fmt);
         vfprintf(stderr, fmt, ap);
@@ -60,7 +63,7 @@ void log_buffer_debug(int level, const char* file, int lineno, void* pbuf, int s
                     plast ++;
                 }                
             }
-            fprintf(stderr,"0x%08x:",i);
+            fprintf(stderr,"\n0x%08x:",i);
         }
         fprintf(stderr," 0x%02x",*ptr);
         ptr ++;
@@ -81,5 +84,6 @@ void log_buffer_debug(int level, const char* file, int lineno, void* pbuf, int s
         }
         fprintf(stderr, "\n");
     }
+    fflush(stderr);
     return;
 }
