@@ -68,7 +68,8 @@ protocol_data* ipmi_session_process_packet(protocol_data* packet_inc) {
 			break;
 		default:
 			// error
-			packet_out->data = malloc(sizeof(unsigned char)); // so we don't free unallocated space later
+			LOG_ERROR("(ipmi-session) Auth Type: 0x%02x (unknown)", packet_inc->data[IPMI_SES_HEADER_OFFSET_AUTH_TYPE]);
+			packet_out->data = NULL;
 			packet_out->length = -1;
 			return packet_out;
 			break;
