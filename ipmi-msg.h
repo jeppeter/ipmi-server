@@ -11,7 +11,7 @@
 #define IPMI_MSG_HEADER_CHECKSUM_DATA		0x06	// checksum data
 
 // network functions
-//#define IPMI_NETFN_CHASSIS				0x00
+#define IPMI_NETFN_CHASSIS				0x00
 #define IPMI_NETFN_BRIDGE				0x02
 #define IPMI_NETFN_SENSOR				0x04
 #define IPMI_NETFN_APP					0x06
@@ -24,7 +24,7 @@
 // cmds application
 #define IPMI_CMD_GET_DEVICE_ID			0x01	// get device ID
 /*****************************************************************************/
-/* IPMI command: Get Channel Authentication Capabilities
+/* IPMI command: Get Channel Authentication Capabilities */
 /*****************************************************************************/
 #define IPMI_CMD_GET_CHAN_AUTH_CAPA 	0x38
 #define GCAC_CHANNEL_NUM				0x01	// Channel Number
@@ -39,7 +39,7 @@
 
 
 /*****************************************************************************/
-/* IPMI command: Get Channel Authentication Capabilities
+/* IPMI command: Get Channel Authentication Capabilities */
 /*****************************************************************************/
 #define IPMI_CMD_GET_SESS_CHALLENGE 	0x39
 

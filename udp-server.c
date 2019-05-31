@@ -11,6 +11,7 @@
 #include "asf.h"
 #include "ipmi-session.h"
 #include "ipmi-sensor.h"
+#include "log.h"
 #include "config.h"
 #include <stdlib.h>
 #include <time.h>
@@ -24,9 +25,11 @@
 #endif
 #include  <signal.h>
 void exit_cleanup() {
-	printf("\nCleanup..");
+	LOG_DEBUG("Cleanup..");
 	sensors_cleanup();
-	printf(". done, exiting\n");
+	LOG_DEBUG(". done, exiting");
+	fflush(stdout);	
+	fflush(stderr);
 	exit(0);
 }
 
@@ -39,6 +42,12 @@ int main(int argc, char**argv)
 
 	if (argc > 1) {
 		port = atoi(argv[1]);
+	}
+	if (argc > 2) {
+		set_log_level(LOG_DEBUG_LEVEL);
+	}
+	if (argc > 3) {
+		set_log_level(LOG_TRACE_LEVEL);
 	}
 
 
@@ -63,9 +72,9 @@ int main(int argc, char**argv)
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr=htonl(INADDR_ANY);
 	servaddr.sin_port=htons(port);
-	printf("Starting IPMI Server on Port %d\n",port);
+	LOG_DEBUG("Starting IPMI Server on Port %d",port);
 	if (bind(sockfd,(struct sockaddr *)&servaddr,sizeof(servaddr)) == -1) {
-		printf("Could not open UDP socket on Port %d, exiting.\n",port);
+		LOG_ERROR("Could not open UDP socket on Port %d, exiting.",port);
 		exit_cleanup();
 	}
 
@@ -73,17 +82,7 @@ int main(int argc, char**argv)
 		len = sizeof(cliaddr);
 		bytes_recved = recvfrom(sockfd,mesg,1000,0,(struct sockaddr *)&cliaddr,&len);
 
-#ifdef DEBUG
-		printf("-------------------------------------------------------\n");
-
-		// print rec bytes
-		printf("REC: ");
-		for (int i = 0; i <= bytes_recved;i++) {
-			printf("0x%02x ",mesg[i]);
-
-		}
-		printf("\n");
-#endif
+		LOG_BUFFER_DEBUG(mesg,bytes_recved,"REC:");
 		mesg[bytes_recved] = 0;
 
 
@@ -97,7 +96,7 @@ int main(int argc, char**argv)
 		if (packet_out->length > 0) {
 			sendto(sockfd,packet_out->data,packet_out->length,0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
 		} else {
-			printf("Error in udp-server.c: No Packetdata.\n");
+			LOG_ERROR("Error in udp-server.c: No Packetdata.");
 		}
 
 		// cleanup

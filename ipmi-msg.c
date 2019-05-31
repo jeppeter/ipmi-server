@@ -7,6 +7,7 @@
 #include "ipmi-msg.h"
 #include "ipmi-sdr.h"
 #include "ipmi-sensor.h"
+#include "log.h"
 
 struct sensor* sensor_tmp;
 protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_auth* ipmi_session_in) {
@@ -25,19 +26,17 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 		memcpy(msg_in->data, packet_inc->data+6*sizeof(unsigned char), packet_inc->length-6-1);
 		msg_in->checksum_data = packet_inc->data[packet_inc->length-1];	// last byte is checksum
 	}
-#ifdef DEBUG
-	printf("(ipmi-msg) rs_sa: 0x%02x rs_lun: 0x%02x net_fn: 0x%02x\n", msg_in->rs_sa, msg_in->rs_lun, msg_in->net_fn);
-	printf("(ipmi-msg) rq_sa: 0x%02x rq_seq: 0x%02x rq_lun: 0x%02x\n", msg_in->rq_sa, msg_in->rq_seq, msg_in->rq_lun);
-	printf("(ipmi-msg) header checksum: 0x%02x (calculated: 0x%02x)\n", msg_in->checksum_header, ipmi_checksum(packet_inc->data, 2));
-	printf("(ipmi-msg) data checksum: 0x%02x (calculated: 0x%02x)\n", msg_in->checksum_data, ipmi_checksum(packet_inc->data, packet_inc->length-1));
-	printf("(ipmi-msg) cmd: 0x%02x data len: %d\n", msg_in->cmd, packet_inc->length-6-1);
-#endif
+	LOG_DEBUG("(ipmi-msg) rs_sa: 0x%02x rs_lun: 0x%02x net_fn: 0x%02x", msg_in->rs_sa, msg_in->rs_lun, msg_in->net_fn);
+	LOG_DEBUG("(ipmi-msg) rq_sa: 0x%02x rq_seq: 0x%02x rq_lun: 0x%02x", msg_in->rq_sa, msg_in->rq_seq, msg_in->rq_lun);
+	LOG_DEBUG("(ipmi-msg) header checksum: 0x%02x (calculated: 0x%02x)", msg_in->checksum_header, ipmi_checksum(packet_inc->data, 2));
+	LOG_DEBUG("(ipmi-msg) data checksum: 0x%02x (calculated: 0x%02x)", msg_in->checksum_data, ipmi_checksum(packet_inc->data, packet_inc->length-1));
+	LOG_DEBUG("(ipmi-msg) cmd: 0x%02x data len: %d", msg_in->cmd, packet_inc->length-6-1);
 	// check incoming checksum
 	if (msg_in->checksum_header != ipmi_checksum(msg_in, 2)) {
-		printf("ipmi-msg) IPMI header checksum failed");
+		LOG_ERROR("ipmi-msg) IPMI header checksum failed");
 	}
 	if (msg_in->checksum_data != ipmi_checksum(packet_inc->data, packet_inc->length-1) ) {
-		printf("ipmi-msg) IPMI data checksum failed");
+		LOG_ERROR("ipmi-msg) IPMI data checksum failed");
 	}
 
 	// create outgoing msg
@@ -132,9 +131,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 			break;
 
 		default:
-#ifdef DEBUG
-			printf("(ipmi-msg) Unknown cmd: 0x%02x\n", msg_in->cmd);
-#endif
+			LOG_ERROR("(ipmi-msg) Unknown cmd: 0x%02x", msg_in->cmd);
 			msg_out->data_len = 1;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
 			msg_out->data[0] = 0xd5;	// completion code: Cannot execute command. Command, or request parameter(s), not supported in present state.
@@ -194,7 +191,6 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 				if (bytes_to_read > (SDR_HEADER_LENGTH + sensor_tmp->record_length - offset))
 					bytes_to_read = SDR_HEADER_LENGTH + sensor_tmp->record_length - offset;
 			}
-//			printf("     record length: %d offset: %d bytes to read: %d\n", sensor_tmp->record_length, offset, bytes_to_read);
 			msg_out->data_len = 3+bytes_to_read;
 			msg_out->data= calloc(msg_out->data_len, sizeof(unsigned char));
 			msg_out->data[0] = 0;		// completion code: Command Completed Normally
@@ -246,9 +242,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 			break;
 
 		default:
-#ifdef DEBUG
-			printf("(ipmi-msg) Unknown cmd: 0x%02x\n", msg_in->cmd);
-#endif
+			LOG_ERROR("(ipmi-msg) Unknown cmd: 0x%02x", msg_in->cmd);
 			msg_out->data_len = 1;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
 			msg_out->data[0] = 0xd5;	// completion code: Cannot execute command. Command, or request parameter(s), not supported in present state.
@@ -290,9 +284,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 			break;
 
 		default:
-#ifdef DEBUG
-			printf("(ipmi-msg) Unknown cmd: 0x%02x\n", msg_in->cmd);
-#endif
+			LOG_DEBUG("(ipmi-msg) Unknown cmd: 0x%02x\n", msg_in->cmd);
 			msg_out->data_len = 1;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
 			msg_out->data[0] = 0xd5;	// completion code: Cannot execute command. Command, or request parameter(s), not supported in present state.
@@ -301,11 +293,19 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 
 		break; // switch close: IPMI_NETFN_SENSOR
 
+	case IPMI_NETFN_CHASSIS:
+		switch(msg_in->cmd) {
+		default:
+			msg_out->data_len = 1;
+			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
+			msg_out->data[0] = 0xd5;	// completion code: Cannot execute command. Command, or request parameter(s), not supported in present state.
+			break;
+
+		}
+		break;
 
 	default:
-#ifdef DEBUG
-		printf("(ipmi-msg): netfn unknown: %d", msg_in->net_fn);
-#endif
+		LOG_DEBUG("(ipmi-msg): netfn unknown: %d", msg_in->net_fn);
 		msg_out->data_len = 1;
 		msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
 		msg_out->data[0] = 0xd5;	// completion code: Cannot execute command. Command, or request parameter(s), not supported in present state.

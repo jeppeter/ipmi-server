@@ -4,10 +4,10 @@
 CC      = /usr/bin/gcc
 LDFLAGS =  -lcrypto
 CFLAGS_DEBUG 	= -std=c99	-Wall -g -DDEBUG -D_REENTRANT
-CFLAGS_NORMAL 	= -std=c99 -O3 
+CFLAGS_NORMAL 	= -std=c99 -O3 -DDEBUG
 CFLAGS 			= $(CFLAGS_NORMAL)
 # objects
-OBJ = ipmi-msg.o ipmi-sdr.o ipmi-sensor.o ipmi-session.o udp-server.o asf.o rmcp.o
+OBJ = ipmi-msg.o ipmi-sdr.o ipmi-sensor.o ipmi-session.o udp-server.o asf.o rmcp.o log.o
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
@@ -48,7 +48,7 @@ normal-debug: 	normal
 clean: clean_o clean_bin
 	
 clean_o:
-	-rm *.o 
+	-rm  -f *.o 
 clean_bin:
-	-rm ipmi-server
+	-rm -f ipmi-server
 

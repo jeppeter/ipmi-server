@@ -5,6 +5,7 @@
 #include "rmcp.h"
 #include "asf.h"
 #include "ipmi-session.h"
+#include "log.h"
 
 
 
@@ -16,9 +17,7 @@ protocol_data* rmcp_process_packet(protocol_data* packet_in) {
 			if (packet_in->data[RMCP_HEADER_OFFSET_SEQ_NR] == RMCP_HEADER_SEQ_NOACK) {
 				// no RMCP-ACK needed
 				if ((packet_in->data[RMCP_HEADER_OFFSET_CLASS] & RCMP_HEADER_CLASS_MASK) == RMCP_HEADER_CLASS_ASF) {
-#ifdef DEBUG
-					printf("Got valid RMCP Header with ASF in it\n");
-#endif
+					LOG_DEBUG("Got valid RMCP Header with ASF in it");
 					// craft new packet with pointer to right position
 					protocol_data* asf_packet_in = malloc(sizeof(protocol_data));
 					asf_packet_in->length = packet_in->length-RMCP_HEADER_LENGTH;
@@ -37,7 +36,7 @@ protocol_data* rmcp_process_packet(protocol_data* packet_in) {
 						// copy ASF packet
 						memcpy(packet_out->data + (RMCP_HEADER_LENGTH * sizeof(unsigned char)), asf_packet_out->data, asf_packet_out->length);
 					} else {
-						printf("Some Error happened down the Road.\n");
+						LOG_ERROR("Some Error happened down the Road.");
 					}
 					// cleanup
 					free(asf_packet_out->data);
@@ -47,9 +46,7 @@ protocol_data* rmcp_process_packet(protocol_data* packet_in) {
 
 				// IPMI
 				if ((packet_in->data[RMCP_HEADER_OFFSET_CLASS] & RCMP_HEADER_CLASS_MASK) == RMCP_HEADER_CLASS_IPMI) {
-#ifdef DEBUG
-					printf("Got valid RMCP Header with IPMI in it\n");
-#endif
+					LOG_DEBUG("Got valid RMCP Header with IPMI in it");
 					// craft new packet with pointer to right position
 					protocol_data* ipmi_session_packet_in = malloc(sizeof(protocol_data));
 					ipmi_session_packet_in->length = packet_in->length-RMCP_HEADER_LENGTH;
@@ -68,7 +65,7 @@ protocol_data* rmcp_process_packet(protocol_data* packet_in) {
 						memcpy(packet_out->data + (RMCP_HEADER_LENGTH * sizeof(unsigned char)), ipmi_session_packet_out->data, ipmi_session_packet_out->length);
 
 					} else {
-						printf("Some Error happened down the Road.\n");
+						LOG_ERROR("Some Error happened down the Road.");
 						packet_out->length = -1;
 					}
 					// cleanup
@@ -91,7 +88,7 @@ protocol_data* rmcp_process_packet(protocol_data* packet_in) {
 			}
 		}
 	}
-	printf("Some Error in RMCP happend.\n");
+	LOG_ERROR("Some Error in RMCP happend.");
 	packet_out->length = -1;
 	return packet_out;
 }

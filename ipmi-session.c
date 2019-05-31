@@ -6,6 +6,7 @@
 #include "udp-server.h"
 #include "ipmi-session.h"
 #include "ipmi-msg.h"
+#include "log.h"
 
 
 
@@ -31,24 +32,18 @@ protocol_data* ipmi_session_process_packet(protocol_data* packet_inc) {
 
 
 	protocol_data*  packet_out =  (protocol_data *) malloc(sizeof(protocol_data));
-#ifdef DEBUG
-	printf("(ipmi-session) Session ID: %d\n", ipmi_session_in->ses_id);
-	printf("(ipmi-session) Sequence Number: %d \n", ipmi_session_in->seq_num);
-#endif
+	LOG_DEBUG("(ipmi-session) Session ID: %d", ipmi_session_in->ses_id);
+	LOG_DEBUG("(ipmi-session) Sequence Number: %d ", ipmi_session_in->seq_num);
 
 
 	switch (packet_inc->data[IPMI_SES_HEADER_OFFSET_AUTH_TYPE]) {
 		case IPMI_SES_HEADER_AUTH_TYPE_NONE:
 			// auth none
-			#ifdef DEBUG
-				printf("(ipmi-session) Auth Type: 0x%02x (None)\n", packet_inc->data[IPMI_SES_HEADER_OFFSET_AUTH_TYPE]);
-			#endif
+			LOG_DEBUG("(ipmi-session) Auth Type: 0x%02x (None)", packet_inc->data[IPMI_SES_HEADER_OFFSET_AUTH_TYPE]);
 			break;
 		case IPMI_SES_HEADER_AUTH_TYPE_MD2:
 			// auth MD2
-			#ifdef DEBUG
-				printf("(ipmi-session) Auth Type: 0x%02x (MD2)\n", packet_inc->data[IPMI_SES_HEADER_OFFSET_AUTH_TYPE]);
-			#endif
+			LOG_DEBUG("(ipmi-session) Auth Type: 0x%02x (MD2)", packet_inc->data[IPMI_SES_HEADER_OFFSET_AUTH_TYPE]);
 			break;
 
 		case IPMI_SES_HEADER_AUTH_TYPE_MD5:
@@ -59,22 +54,17 @@ protocol_data* ipmi_session_process_packet(protocol_data* packet_inc) {
 			}
 
 
-			#ifdef DEBUG
 				if (ipmi_session_in->auth_valid) {
-					printf("(ipmi-session) Auth Type: 0x%02x (MD5, valid)\n", packet_inc->data[IPMI_SES_HEADER_OFFSET_AUTH_TYPE]);
+					LOG_DEBUG("(ipmi-session) Auth Type: 0x%02x (MD5, valid)", packet_inc->data[IPMI_SES_HEADER_OFFSET_AUTH_TYPE]);
 				} else {
-					printf("(ipmi-session) Auth Type: 0x%02x (MD5, invalid)\n", packet_inc->data[IPMI_SES_HEADER_OFFSET_AUTH_TYPE]);
+					LOG_DEBUG("(ipmi-session) Auth Type: 0x%02x (MD5, invalid)", packet_inc->data[IPMI_SES_HEADER_OFFSET_AUTH_TYPE]);
 				}
-			#endif
 			break;
 
 		case IPMI_SES_HEADER_AUTH_TYPE_PW:
 			// auth straight password
 			// check pw
-
-			#ifdef DEBUG
-				printf("(ipmi-session) Auth Type: 0x%02x (Password)\n", packet_inc->data[IPMI_SES_HEADER_OFFSET_AUTH_TYPE]);
-			#endif
+			LOG_DEBUG("(ipmi-session) Auth Type: 0x%02x (Password)", packet_inc->data[IPMI_SES_HEADER_OFFSET_AUTH_TYPE]);
 			break;
 		default:
 			// error
@@ -83,9 +73,7 @@ protocol_data* ipmi_session_process_packet(protocol_data* packet_inc) {
 			return packet_out;
 			break;
 	}
-	#ifdef DEBUG
-		printf("(ipmi-session) IPMI Message Length: %d \n", ipmi_session_in->ipmi_msg_len);
-	#endif
+	LOG_DEBUG("(ipmi-session) IPMI Message Length: %d", ipmi_session_in->ipmi_msg_len);
 	// hand over to ipmi handler
 	protocol_data* ipmi_msg_packet_in = malloc(sizeof(protocol_data));
 	ipmi_msg_packet_in->length = ipmi_session_in->ipmi_msg_len;
@@ -157,9 +145,6 @@ uint8_t * ipmi_auth_md5(ipmi_session_auth* s, uint8_t * data, int data_len, char
 	static uint8_t md[16];
 	uint32_t temp;
 	temp = (s->seq_num);
-	//printf("seqnu: 0x%x\n", temp);
-
-
 
 
 	// padd password with zeros
@@ -177,8 +162,6 @@ uint8_t * ipmi_auth_md5(ipmi_session_auth* s, uint8_t * data, int data_len, char
 	MD5_Update(&ctx, (const uint8_t *)&temp, sizeof(uint32_t));
 	MD5_Update(&ctx, (const uint8_t *)pass_zeroed, 16);
 	MD5_Final(md, &ctx);
-
-	//printf("  MD5 AuthCode incoming calculated  : %s\n", buf2str(md, 16));
 
 	return md;
 }

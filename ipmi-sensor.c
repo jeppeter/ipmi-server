@@ -291,13 +291,11 @@ int odroid_fan_speed(char* path) {
 
 	fp = fopen(path, "r");
 	if (fp == NULL) {
-
-		printf("(ipmi-sensor) Could not open %s\n", path);
+		LOG_ERROR("(ipmi-sensor) Could not open %s", path);
 		return -1;
 	}
 
 	fscanf (fp, "%d", &value);
-//	printf("(ipmi-sensor) odroid sensor read: %d\n", value);
 	fclose (fp);
 
 	return value*100/255*1000;
@@ -309,12 +307,11 @@ int odroid_sensor_read(char* path) {
 
 	fp = fopen(path, "r");
 	if (fp == NULL) {
-		printf("(ipmi-sensor) Could not open %s\n", path);
+		LOG_ERROR("(ipmi-sensor) Could not open %s", path);
 		return -1;
 	}
 
 	fscanf (fp, "%lf", &value);
-//	printf("(ipmi-sensor) odroid sensor read: %lf\n", value);
 	fclose (fp);
 
 	return value*1000;
@@ -385,13 +382,13 @@ int rpi_i2c_init() {
 	// Open i2c file
 	i2c_file = open(filename, O_RDWR);
 	if (i2c_file < 0) {
-		printf("(ipmi-sensor): Could not open i2c-dev-file, Error nr %i\n",errno);
+		LOG_ERROR("(ipmi-sensor): Could not open i2c-dev-file, Error nr %i",errno);
 		return -1;
 	}
 
 	// Set i2c Device Address
 	if (ioctl(i2c_file, I2C_SLAVE, addr) < 0) {
-		printf("(ipmi-sensor): Could set i2c device address, Error nr %i\n",errno);
+		LOG_ERROR("(ipmi-sensor): Could set i2c device address, Error nr %i",errno);
 		exit(1);
 	}
 	return 1;
@@ -406,7 +403,7 @@ int rpi_i2c_read_current(char* path) {
 	res = i2c_smbus_read_word_data(i2c_file, reg);
 	if (res < 0) {
 		/* ERROR HANDLING: i2c transaction failed */
-		printf("(ipmi-sensor): Error at reading i2c register, errno %i\n",errno);
+		LOG_ERROR("(ipmi-sensor): Error at reading i2c register, errno %i",errno);
 		return 0;
 	} else {
 		/* res contains the read word */
@@ -418,7 +415,6 @@ int rpi_i2c_read_current(char* path) {
 		 */
 		res = res * 20;
 		resres = res / 100.0;
-	//	printf("(ipmi-sensor) Read Done, res is: %3.1fmA\n", resres);
 	}
 	return resres;
 }
@@ -431,7 +427,7 @@ int rpi_i2c_read_bus_voltage(char* path) {
 	res = i2c_smbus_read_word_data(i2c_file, reg);
 	if (res < 0) {
 		/* ERROR HANDLING: i2c transaction failed */
-		printf("(ipmi-sensor): Error at reading i2c register, errno %i\n",errno);
+		LOG_ERROR("(ipmi-sensor): Error at reading i2c register, errno %i",errno);
 	} else {
 		/* res contains the read word */
 		res = ((res & 0x00FF)<<8) | (res>>8); // switch bytes
@@ -441,7 +437,6 @@ int rpi_i2c_read_bus_voltage(char* path) {
 		 * 					final result: 	=> shift 1 right
 		 */
 		resres = res >> 1;
-	//	printf("(ipmi-sensor) Read Done, res is: %3.1fmV\n", resres);
 	}
 	return resres;
 }
@@ -449,7 +444,6 @@ int rpi_i2c_read_power(char* path) {
 	int voltage = rpi_i2c_read_bus_voltage(0);	// mV
 	int current = rpi_i2c_read_current(0);		// mA
 	float power = voltage*current/1000.0;
-	//printf("(ipmi-sensor): voltage: %d current: %d power: %f\n",voltage, current, power);
 	return (int)power;
 }
 #endif

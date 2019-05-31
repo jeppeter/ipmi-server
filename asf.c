@@ -3,36 +3,25 @@
 #include "udp-server.h"
 #include "rmcp.h"
 #include "asf.h"
+#include "log.h"
 
 
 
 protocol_data* asf_process_packet(protocol_data* packet_inc) {
-#ifdef DEBUG
 	unsigned int iana_num = (packet_inc->data[ASF_HEADER_OFFSET_IANA_NUM] << 24 ) +
 			(packet_inc->data[ASF_HEADER_OFFSET_IANA_NUM + 1] << 16 ) +
 			(packet_inc->data[ASF_HEADER_OFFSET_IANA_NUM + 2] << 8 ) +
 			(packet_inc->data[ASF_HEADER_OFFSET_IANA_NUM + 3] << 0 );
 
-	printf("ASF IANA NUM: 0x%08x", iana_num);
-	if (iana_num ==  ASF_IANA_NUM) {
-		printf(" -> valid\n");
-	} else {
-		printf(" -> invalid\n");
-	}
+	LOG_DEBUG("ASF IANA NUM: 0x%08x -> %s", iana_num, iana_num == ASF_IANA_NUM ? "valid" : "invalid");
 
-	printf("ASF Type: ");
-#endif
 	switch (packet_inc->data[ASF_HEADER_OFFSET_MSG_TYPE]) {
 		case ASF_MSG_TYPE_PONG:
-#ifdef DEBUG
-			printf(" Pong\n");
-#endif
+			LOG_DEBUG("ASF Type: Pong");
 			break;
 
 		case ASF_MSG_TYPE_PING: {
-	#ifdef DEBUG
-				printf(" Ping\n");
-	#endif
+			LOG_DEBUG("ASF Type: Ping");
 
 				protocol_data*  ret =  (protocol_data *) malloc( sizeof(protocol_data) );
 				ret->length = 8+16;
@@ -66,17 +55,13 @@ protocol_data* asf_process_packet(protocol_data* packet_inc) {
 				ret->data[ASF_HEADER_LENGTH+ASF_DATA_OFFSET_RESERVED + 3 ] = 0;
 				ret->data[ASF_HEADER_LENGTH+ASF_DATA_OFFSET_RESERVED + 4 ] = 0;
 				ret->data[ASF_HEADER_LENGTH+ASF_DATA_OFFSET_RESERVED + 5 ] = 0;
-	#ifdef DEBUG
-				printf("Sent ASF Pong\n");
-	#endif
+				LOG_DEBUG("Sent ASF Pong");
 				return ret;
 			}
 			break;
 
 		default:
-#ifdef DEBUG
-			printf(" unknown\n");
-#endif
+			LOG_ERROR("ASF Type: unknown");
 			break;
 	}
 
