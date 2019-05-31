@@ -64,7 +64,7 @@ int main(int argc, char**argv)
 	int sockfd,bytes_recved;
 	struct sockaddr_in servaddr,cliaddr;
 	socklen_t len;
-	unsigned char mesg[1000];
+	unsigned char mesg[1500];
 
 	sockfd=socket(AF_INET,SOCK_DGRAM,0);
 
@@ -80,7 +80,7 @@ int main(int argc, char**argv)
 
 	for (;;) {
 		len = sizeof(cliaddr);
-		bytes_recved = recvfrom(sockfd,mesg,1000,0,(struct sockaddr *)&cliaddr,&len);
+		bytes_recved = recvfrom(sockfd,mesg,1500,0,(struct sockaddr *)&cliaddr,&len);
 
 		LOG_BUFFER_DEBUG(mesg,bytes_recved,"REC:");
 		mesg[bytes_recved] = 0;
@@ -94,6 +94,7 @@ int main(int argc, char**argv)
 		// handle answer packet
 		protocol_data* packet_out = rmcp_process_packet(packet_in);
 		if (packet_out->length > 0) {
+			LOG_BUFFER_DEBUG(packet_out->data, packet_out->length , "SEND:");
 			sendto(sockfd,packet_out->data,packet_out->length,0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
 		} else {
 			LOG_ERROR("Error in udp-server.c: No Packetdata.");
