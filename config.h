@@ -8,7 +8,7 @@
 #define CONFIG_H_
 
 
-char* password = "asd";
+char* password = "dw";
 
 
 #endif /* CONFIG_H_ */

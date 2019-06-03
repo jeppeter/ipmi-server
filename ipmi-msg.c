@@ -61,6 +61,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 		case IPMI_CMD_GET_CHAN_AUTH_CAPA: // Get Channel Authentication Capabilities
 			msg_out->data_len = 9;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[CMD_OFFSET_COMPL_CODE] = 0;	// completion code: Command Completed Normally
 			msg_out->data[GCAC_CHANNEL_NUM] = 0;	// channel number
 			msg_out->data[GCAC_AUTH_TYPE] = GCAC_AUTO_TYPE_BIT_MD5 | GCAC_AUTO_TYPE_BIT_PWKEY | GCAC_AUTO_TYPE_BIT_NONE;
@@ -74,19 +75,21 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 		case IPMI_CMD_GET_SESS_CHALLENGE: // Get Session Challenge
 			msg_out->data_len = 21;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0;		// completion code: Command Completed Normally
 			msg_out->data[1] = ((ipmi_session_in->ses_id >> 0) & 0xff);			// byte 2 tmp session 0
 			msg_out->data[2] = ((ipmi_session_in->ses_id >> 8) & 0xff);			// byte 3 tmp session 1
 			msg_out->data[3] = ((ipmi_session_in->ses_id >> 16) & 0xff);		// byte 4 tmp session 2
 			msg_out->data[4] = ((ipmi_session_in->ses_id >> 24) & 0xff);		// byte 5 tmp session 3
-			char* test = "chall_str"; // nice to have: use a random challenge string
-			memcpy(msg_out->data+5*sizeof(unsigned char), test, 10 );
+			char* test = "dw"; // nice to have: use a random challenge string
+			strncpy(msg_out->data+5*sizeof(unsigned char), test, 10);
 
 			break;
 		case IPMI_CMD_ACTIVE_SESS: // Activate Session
 			// check for valid auth here?
 			msg_out->data_len = 11;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0;		// completion code: Command Completed Normally
 			msg_out->data[1] = msg_in->data[0]; 	// Authentication Type for remainder of session: same as requested
 			msg_out->data[2] = (ipmi_session_in->ses_id & 0xff); 			// byte 3  Session ID byte 1
@@ -103,6 +106,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 		case IPMI_CMD_GET_DEVICE_ID: // Get Device ID
 			msg_out->data_len = 12;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0;		// completion code: Command Completed Normally
 			msg_out->data[1] = 0x11; 	// byte 2 Device ID
 			msg_out->data[2] = 0x1; 	// byte 3  Device Revision
@@ -120,6 +124,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 		case IPMI_CMD_SET_SES_PRIV_LEVEL:
 			msg_out->data_len = 2;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0;		// completion code: Command Completed Normally
 			msg_out->data[1] = msg_in->data[0]; 	// privilege level: as requested
 			break;
@@ -127,6 +132,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 		case IPMI_CMD_CLOSE_SESSION:
 			msg_out->data_len = 1;
 			msg_out->data= calloc(msg_out->data_len,  sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0;		// completion code: Command Completed Normally
 			break;
 
@@ -145,6 +151,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 		case IPMI_CMD_GET_SDR_REPO_INFO:
 			msg_out->data_len = 15;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0;		// completion code: Command Completed Normally
 			msg_out->data[1] = 0x51;	// SDR Version
 			msg_out->data[2] = SENSOR_COUNT & 0xff;// Number of Records, LSB
@@ -165,6 +172,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 		case IPMI_CMD_RESERVE_SDR_REPO:
 			msg_out->data_len = 3;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0;		// completion code: Command Completed Normally
 			msg_out->data[1] = 0x34;	// Reservation ID, LSB
 			msg_out->data[2] = 0x12;	// Reservation ID, MSB
@@ -245,6 +253,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 			LOG_ERROR("(ipmi-msg) Unknown cmd: 0x%02x", msg_in->cmd);
 			msg_out->data_len = 1;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0xd5;	// completion code: Cannot execute command. Command, or request parameter(s), not supported in present state.
 			break;
 		}
@@ -255,6 +264,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 		case IPMI_CMD_GET_SENSOR_READING:
 			msg_out->data_len = 3;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0;		// completion code: Command Completed Normally
 			msg_out->data[1] = (int)(get_sensor(msg_in->data[0])->sdr.nominal_read);			// Sensor Reading for given sensor number msg_in->data[0]
 			msg_out->data[2] = 0b01000000;		// Sensor Scanning disabled
@@ -262,6 +272,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 		case IPMI_CMD_GET_SENSOR_FACTORS:
 			msg_out->data_len = 8;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0;		// completion code: Command Completed Normally
 			msg_out->data[1] = msg_in->data[0];			// Next Reading: use the one supplied by request
 			// copy over m, m_tol, b, accuracy, r_exp and b_exp from the sdr
@@ -270,16 +281,19 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 		case IPMI_CMD_GET_SENSOR_THRESHOLDS:
 			msg_out->data_len = 9;
 			msg_out->data= calloc(msg_out->data_len,  sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0;		// completion code: Command Completed Normally
 			break;
 		case IPMI_CMD_GET_SENSOR_EVENT_STATUS:
 			msg_out->data_len = 3;
 			msg_out->data= calloc(msg_out->data_len,  sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0;		// completion code: Command Completed Normally
 			break;
 		case IPMI_CMD_GET_SENSOR_EVENT_ENABLE:
 			msg_out->data_len = 2;
 			msg_out->data= calloc(msg_out->data_len,  sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0;		// completion code: Command Completed Normally
 			break;
 
@@ -287,6 +301,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 			LOG_DEBUG("(ipmi-msg) Unknown cmd: 0x%02x\n", msg_in->cmd);
 			msg_out->data_len = 1;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0xd5;	// completion code: Cannot execute command. Command, or request parameter(s), not supported in present state.
 			break;
 		}
@@ -298,6 +313,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 		default:
 			msg_out->data_len = 1;
 			msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
+			memset(msg_out->data, 0, msg_out->data_len);
 			msg_out->data[0] = 0xd5;	// completion code: Cannot execute command. Command, or request parameter(s), not supported in present state.
 			break;
 
@@ -308,6 +324,7 @@ protocol_data* ipmi_msg_process_packet(protocol_data* packet_inc, ipmi_session_a
 		LOG_DEBUG("(ipmi-msg): netfn unknown: %d", msg_in->net_fn);
 		msg_out->data_len = 1;
 		msg_out->data= malloc(msg_out->data_len* sizeof(unsigned char));
+		memset(msg_out->data, 0, msg_out->data_len);
 		msg_out->data[0] = 0xd5;	// completion code: Cannot execute command. Command, or request parameter(s), not supported in present state.
 		break;
 	}
